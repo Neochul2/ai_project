@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 이미지 분석기</title>
+    <style>
+        /* 다크 모드 기반 미니멀 디자인 */
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --accent-color: #bb86fc;
+            --border-color: #333;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 500px;
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        }
+
+        h1 { text-align: center; color: var(--accent-color); font-weight: 700; margin-bottom: 2rem; }
+
+        /* 업로드 영역 */
+        .upload-section {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .upload-section:hover { border-color: var(--accent-color); background: rgba(187, 134, 252, 0.05); }
+
+        #preview {
+            max-width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* 입력 폼 */
+        textarea {
+            width: 100%;
+            background: #2a2a2a;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 1.5rem;
+            resize: none;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+        }
+
+        textarea:focus { outline: none; border-color: var(--accent-color); }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: var(--accent-color);
+            border: none;
+            border-radius: 10px;
+            color: #121212;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        button:active { transform: scale(0.98); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* 로딩 애니메이션 */
+        .loader {
+            display: none;
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: var(--accent-color);
+        }
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(187, 134, 252, 0.2);
+            border-left-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* 결과 창 */
+        #result-area {
+            margin-top: 2.5rem;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-left: 4px solid var(--accent-color);
+            border-radius: 8px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .result-label { color: var(--accent-color); font-weight: 700; margin-bottom: 12px; font-size: 1.1rem; }
+        .result-text { white-space: pre-wrap; word-break: break-all; font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>AI 분석기</h1>
+    
+    <div class="upload-section" onclick="document.getElementById('imageInput').click()">
+        <p id="uploadText">이미지를 업로드하려면 클릭하세요</p>
+        <input type="file" id="imageInput" accept="image/*" hidden onchange="handlePreview(this)">
+        <img id="preview" alt="미리보기">
+    </div>
+
+    <textarea id="questionInput" rows="3" placeholder="이미지에 대해 무엇이 궁금하신가요?"></textarea>
+    
+    <button id="analyzeBtn" onclick="startAnalysis()">분석하기</button>
+
+    <div id="loader" class="loader">
+        <div class="spinner"></div>
+        <span>AI가 분석 중입니다...</span>
+    </div>
+
+    <div id="result-area">
+        <div class="result-label">분석 결과</div>
+        <div id="resultContent" class="result-text"></div>
+    </div>
+</div>
+
+<script>
+    // 이미지 미리보기 처리
+    function handlePreview(input) {
+        const preview = document.getElementById('preview');
+        const uploadText = document.getElementById('uploadText');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                uploadText.style.display = 'none';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // AI 분석 요청 실행
+    async function startAnalysis() {
+        const imageInput = document.getElementById('imageInput');
+        const questionInput = document.getElementById('questionInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loader = document.getElementById('loader');
+        const resultArea = document.getElementById('result-area');
+        const resultContent = document.getElementById('resultContent');
+
+        if (!imageInput.files[0]) {
+            alert("먼저 분석할 이미지를 선택해주세요.");
+            return;
+        }
+
+        // UI 초기화 및 로딩 시작
+        analyzeBtn.disabled = true;
+        loader.style.display = 'block';
+        resultArea.style.display = 'none';
+
+        const formData = new FormData();
+        formData.append('image', imageInput.files[0]);
+        formData.append('question', questionInput.value);
+
+        try {
+            // Node.js 프록시 서버로 요청 전송
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // 가독성 있게 결과 렌더링
+                resultContent.innerHTML = `
+                    <div style="margin-bottom: 15px;"><strong>📄 추출된 텍스트:</strong><br>${data.text || '없음'}</div>
+                    <div><strong>🤖 AI 답변:</strong><br>${data.answer || '답변을 생성하지 못했습니다.'}</div>
+                `;
+                resultArea.style.display = 'block';
+            } else {
+                alert("분석 실패: " + (data.error || "알 수 없는 오류가 발생했습니다."));
+            }
+        } catch (error) {
+            console.error(error);
+            alert("서버 연결에 실패했습니다. Node.js 서버가 실행 중인지 확인하세요.");
+        } finally {
+            analyzeBtn.disabled = false;
+            loader.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
