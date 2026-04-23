@@ -34,11 +34,11 @@ app.post('/analyze', upload.single('image'), async (req, res) => {
 
         // FastAPI 서버로 보낼 FormData 구성
         const formData = new FormData();
-        formData.append('file', imageFile.buffer, {
+        formData.append('imageFile', imageFile.buffer, {
             filename: imageFile.originalname,
             contentType: imageFile.mimetype,
         });
-        formData.append('question', question || "");
+        formData.append('userQuestion', question || "");
 
         // FastAPI 서버(8000 포트)로 분석 요청 전달
         const response = await axios.post('http://localhost:8000/analyze', formData, {
