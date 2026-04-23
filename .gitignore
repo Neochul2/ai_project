@@ -1,3 +1,5 @@
+#gitignore 보안 및 자동생성파일들 제외 
+
 #설정 및 환경변수 
 config.py
 .env
@@ -10,5 +12,7 @@ dataset/
 *.jpeg
 
 #가상환경
-venv/
 .venv/
+
+#node_modules 업로드 제외 -> 업로드시 깃허브 용량문제
+node_modules/
