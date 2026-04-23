@@ -9,7 +9,7 @@ DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
 DB_NAME = os.getenv("DB_NAME", "ai_project_db")
-DB_PORT = 3307  # 🔥 수정: 포트 추가 + int 변환
+DB_PORT = 3307  #  수정: 문자열 "3307" 에서 int 3307로 수정 
 
 def get_db_connection():
     """MySQL 데이터베이스 연결 반환"""
