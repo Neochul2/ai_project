@@ -25,7 +25,7 @@ const upload = multer({ storage: storage });
 // 이미지 분석 API (FastAPI 서버로 요청을 전달하는 Proxy)
 app.post('/analyze', upload.single('image'), async (req, res) => {
     try {
-        const { question } = req.body;
+        const { question, modelType } = req.body;
         const imageFile = req.file;
 
         if (!imageFile) {
@@ -39,13 +39,21 @@ app.post('/analyze', upload.single('image'), async (req, res) => {
             contentType: imageFile.mimetype,
         });
         formData.append('userQuestion', question || "");
+        formData.append('modelType', modelType || "OLLAMA");
 
-        // FastAPI 서버(8000 포트)로 분석 요청 전달
-        const response = await axios.post('http://localhost:8000/analyze', formData, {
+        // 모델 타입에 따라 대상 FastAPI 서버 포트 결정
+        // OLLAMA, GPT -> 8000 / CHANDRA -> 8001
+        const targetPort = modelType === "CHANDRA" ? 8001 : 8000;
+        console.log(`Forwarding request to FastAPI on port ${targetPort} (Model: ${modelType})`);
+
+        // FastAPI 서버로 분석 요청 전달
+        const response = await axios.post(`http://localhost:${targetPort}/analyze`, formData, {
             headers: {
                 ...formData.getHeaders(),
             },
         });
+
+        /* 수정 포인트: 이전 코드 수정 중 발생한 중복 괄호(});) 제거 완료 */
 
         // FastAPI로부터 받은 결과 반환
         res.json(response.data);

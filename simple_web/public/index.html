@@ -140,6 +140,13 @@
 
     <textarea id="questionInput" rows="3" placeholder="이미지에 대해 무엇이 궁금하신가요?"></textarea>
     
+    <!-- 모델 선택 UI 추가 -->
+    <div class="model-selection" style="margin-top: 1.5rem; display: flex; justify-content: space-around; background: #2a2a2a; padding: 15px; border-radius: 10px; border: 1px solid var(--border-color); font-size: 0.9rem;">
+        <label style="cursor: pointer; display: flex; align-items: center;"><input type="radio" name="modelType" value="OLLAMA" checked style="margin-right: 5px;"> Ollama</label>
+        <label style="cursor: pointer; display: flex; align-items: center;"><input type="radio" name="modelType" value="GPT" style="margin-right: 5px;"> GPT-4o</label>
+        <label style="cursor: pointer; display: flex; align-items: center;"><input type="radio" name="modelType" value="CHANDRA" style="margin-right: 5px;"> Chandra OCR 2</label>
+    </div>
+
     <button id="analyzeBtn" onclick="startAnalysis()">분석하기</button>
 
     <div id="loader" class="loader">
@@ -189,8 +196,10 @@
         resultArea.style.display = 'none';
 
         const formData = new FormData();
+        const selectedModel = document.querySelector('input[name="modelType"]:checked').value;
         formData.append('image', imageInput.files[0]);
         formData.append('question', questionInput.value);
+        formData.append('modelType', selectedModel);
 
         try {
             // Node.js 프록시 서버로 요청 전송
